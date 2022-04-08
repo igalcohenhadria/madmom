@@ -229,10 +229,12 @@ class DBNDownBeatTrackingProcessor(Processor):
         # get num_threads from kwargs
         num_threads = min(len(beats_per_bar), kwargs.get('num_threads', 1))
         # init a pool of workers (if needed)
+        self.pool = None
         self.map = map
         if num_threads != 1:
             import multiprocessing as mp
-            self.map = mp.Pool(num_threads).map
+            self.pool = mp.Pool(num_threads)
+            self.map = self.pool.map
         # convert timing information to construct a beat state space
         min_interval = 60. * fps / max_bpm
         max_interval = 60. * fps / min_bpm
@@ -250,6 +252,10 @@ class DBNDownBeatTrackingProcessor(Processor):
         self.correct = correct
         self.fps = fps
 
+    def __del__(self):
+        if self.pool !=	None:
+            self.pool.close()        
+        
     def process(self, activations, **kwargs):
         """
         Detect the (down-)beats in the given activation function.

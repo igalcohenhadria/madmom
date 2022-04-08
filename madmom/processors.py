@@ -450,10 +450,16 @@ class ParallelProcessor(SequentialProcessor):
         #       method. This also means that we must use only 1 thread if we
         #       want to pickle the Processor, because map is pickle-able,
         #       whereas mp.Pool().map is not.
+        self.pool = None
         self.map = map
         if min(len(processors), max(1, num_threads)) > 1:
-            self.map = mp.Pool(num_threads).map
+            self.pool = mp.Pool(num_threads)
+            self.map = self.pool.map
 
+    def __del__(self):
+        if self.pool !=	None:
+            self.pool.close()
+            
     def process(self, data, **kwargs):
         """
         Process the data in parallel.
